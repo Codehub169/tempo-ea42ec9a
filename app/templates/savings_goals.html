@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}Savings Goals - Personal Budget Tracker{% endblock %}
+
+{% block content %}
+<div class="savings-goals-container">
+    <header class="page-header">
+        <h2>Plan Your Savings Goals</h2>
+        <p>Define your financial targets and track your progress towards achieving them.</p>
+    </header>
+
+    <!-- Add Savings Goal Form -->
+    <section class="add-goal-form card mb-4">
+        <div class="card-header">
+            <h3><span class="icon">🎯</span> Create New Savings Goal</h3>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('main.savings_goals') }}" novalidate>
+                {{ form.hidden_tag() }} <!-- CSRF Token -->
+                <div class="form-group">
+                    {{ form.name.label(class_="form-label") }}
+                    {{ form.name(class_="form-control", placeholder="e.g., New Laptop, Vacation Fund") }}
+                    {% if form.name.errors %}
+                        <ul class="form-error">{% for error in form.name.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+                    {% endif %}
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        {{ form.target_amount.label(class_="form-label") }}
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                             {{ form.target_amount(class_="form-control", placeholder="1000.00") }}
+                        </div>
+                        {% if form.target_amount.errors %}
+                            <ul class="form-error">{% for error in form.target_amount.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+                        {% endif %}
+                    </div>
+                    <div class="form-group col-md-6">
+                        {{ form.current_amount.label(class_="form-label") }}
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            {{ form.current_amount(class_="form-control", placeholder="0.00") }}
+                        </div>
+                        {% if form.current_amount.errors %}
+                            <ul class="form-error">{% for error in form.current_amount.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="form-group">
+                    {{ form.deadline.label(class_="form-label") }}
+                    {{ form.deadline(class_="form-control") }}
+                    <small class="form-text text-muted">Optional: Set a target date for your goal.</small>
+                    {% if form.deadline.errors %}
+                        <ul class="form-error">{% for error in form.deadline.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    {{ form.submit(class_="btn btn-primary") }}
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- Savings Goals List -->
+    <section class="goals-list">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+             <h3><span class="icon">🏆</span> Your Savings Goals</h3>
+        </div>
+       
+        {% if goals and goals|length > 0 %}
+            <div class="row">
+                {% for goal in goals %}
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card goal-card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ goal.name }}</h5>
+                                <p class="card-text text-muted">Target: ${{ "%.2f"|format(goal.target_amount) }}</p>
+                                <div class="progress mb-2" style="height: 25px;">
+                                    {% set progress_percent = (goal.current_amount / goal.target_amount * 100)|round|int %}
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ progress_percent }}%;" aria-valuenow="{{ progress_percent }}" aria-valuemin="0" aria-valuemax="100">
+                                        {{ progress_percent }}%
+                                    </div>
+                                </div>
+                                <p class="card-text">Saved: ${{ "%.2f"|format(goal.current_amount) }}</p>
+                                {% if goal.deadline %}
+                                    <p class="card-text"><small class="text-muted">Deadline: {{ goal.deadline.strftime('%Y-%m-%d') }}</small></p>
+                                {% endif %}
+                            </div>
+                            <div class="card-footer bg-transparent border-top-0">
+                                <a href="{{ url_for('main.edit_savings_goal', id=goal.id) }}" class="btn btn-sm btn-warning mr-2" title="Edit">✏️ Edit</a>
+                                <form action="{{ url_for('main.delete_savings_goal', id=goal.id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this savings goal?');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <button type="submit" class="btn btn-sm btn-danger" title="Delete">🗑️ Delete</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-info text-center">
+                <img src="https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8ZHJlYW18ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=500&q=60" alt="No goals yet" style="max-width: 250px; margin-bottom: 20px; border-radius: 8px;">
+                <h4>No Savings Goals Yet!</h4>
+                <p>What are you saving for? Create your first goal using the form above and start tracking your progress!</p>
+            </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

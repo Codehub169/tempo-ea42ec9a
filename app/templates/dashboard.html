@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Personal Budget Tracker{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <header class="dashboard-header">
+        <h2>Welcome back, {{ current_user.username }}!</h2>
+        <p>Here's your financial overview. Let's make today count!</p>
+    </header>
+
+    <!-- Summary Cards -->
+    <section class="summary-cards">
+        <div class="card info-card">
+            <div class="card-header">Total Income <span class="icon">💰</span></div>
+            <div class="card-body">
+                <h3 class="amount">${{ "%.2f"|format(total_income if total_income else 0) }}</h3>
+                <p>Earned this month</p>
+            </div>
+        </div>
+        <div class="card danger-card">
+            <div class="card-header">Total Expenses <span class="icon">💸</span></div>
+            <div class="card-body">
+                <h3 class="amount">${{ "%.2f"|format(total_expenses if total_expenses else 0) }}</h3>
+                <p>Spent this month</p>
+            </div>
+        </div>
+        <div class="card success-card">
+            <div class="card-header">Net Balance <span class="icon">⚖️</span></div>
+            <div class="card-body">
+                <h3 class="amount">${{ "%.2f"|format(net_balance if net_balance else 0) }}</h3>
+                <p>Your current standing</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Charts Section -->
+    <section class="charts-section">
+        <div class="chart-container card">
+            <div class="card-header">Spending by Category</div>
+            <div class="card-body">
+                <!-- Placeholder for spending breakdown chart -->
+                <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8Y2hhcnR8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=500&q=60" alt="Spending by Category Chart Placeholder" style="width:100%; max-height: 300px; object-fit: cover; border-radius: 8px;">
+                <p class="text-center small-text"><i>Chart visualization coming soon.</i></p>
+            </div>
+        </div>
+        <div class="chart-container card">
+            <div class="card-header">Income vs. Expenses</div>
+            <div class="card-body">
+                <!-- Placeholder for income vs. expense chart -->
+                <img src="https://images.unsplash.com/photo-1560420025-9453f02b4724?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTJ8fGJhciUyMGNoYXJ0fGVufDB8fDB8fHww&auto=format&fit=crop&w=500&q=60" alt="Income vs. Expense Chart Placeholder" style="width:100%; max-height: 300px; object-fit: cover; border-radius: 8px;">
+                <p class="text-center small-text"><i>Chart visualization coming soon.</i></p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Recent Transactions -->
+    <section class="recent-transactions card">
+        <div class="card-header">
+            <h4>Recent Transactions</h4>
+            <a href="{{ url_for('main.transactions') }}" class="btn btn-sm btn-outline-primary">View All</a>
+        </div>
+        <div class="card-body">
+            {% if recent_transactions and recent_transactions|length > 0 %}
+                <ul class="list-group">
+                    {% for transaction in recent_transactions %}
+                        <li class="list-group-item transaction-{{ transaction.type }}">
+                            <span class="transaction-category">{{ transaction.category }}</span>
+                            <span class="transaction-description">{{ transaction.description if transaction.description else 'N/A' }}</span>
+                            <span class="transaction-date">{{ transaction.date.strftime('%Y-%m-%d') }}</span>
+                            <span class="transaction-amount {% if transaction.type == 'expense' %}text-danger{% else %}text-success{% endif %}">
+                                {% if transaction.type == 'expense' %}-{% else %}+{% endif %}${{ "%.2f"|format(transaction.amount) }}
+                            </span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>No recent transactions. <a href="{{ url_for('main.transactions') }}">Add one now!</a></p>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Savings Goals Overview -->
+    <section class="savings-goals-overview card">
+        <div class="card-header">
+            <h4>Savings Goals Progress</h4>
+            <a href="{{ url_for('main.savings_goals') }}" class="btn btn-sm btn-outline-primary">Manage Goals</a>
+        </div>
+        <div class="card-body">
+            {% if savings_goals and savings_goals|length > 0 %}
+                {% for goal in savings_goals %}
+                    <div class="goal-item">
+                        <h5>{{ goal.name }}</h5>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" style="width: {{ (goal.current_amount / goal.target_amount * 100)|round|int }}%;">
+                                {{ (goal.current_amount / goal.target_amount * 100)|round|int }}%
+                            </div>
+                        </div>
+                        <p class="goal-amounts">${{ "%.2f"|format(goal.current_amount) }} / ${{ "%.2f"|format(goal.target_amount) }}</p>
+                        {% if goal.deadline %}<p class="goal-deadline">Deadline: {{ goal.deadline.strftime('%Y-%m-%d') }}</p>{% endif %}
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>No savings goals yet. <a href="{{ url_for('main.savings_goals') }}">Set a goal!</a></p>
+            {% endif %}
+        </div>
+    </section>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Placeholder for future chart initialization logic (e.g., using Chart.js)
+    // const spendingCtx = document.getElementById('spendingByCategoryChart');
+    // if (spendingCtx) { /* ... initialize chart ... */ }
+    // const incomeExpenseCtx = document.getElementById('incomeVsExpenseChart');
+    // if (incomeExpenseCtx) { /* ... initialize chart ... */ }
+</script>
+{% endblock %}

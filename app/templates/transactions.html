@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Transactions - Personal Budget Tracker{% endblock %}
+
+{% block content %}
+<div class="transactions-container">
+    <header class="page-header">
+        <h2>Manage Your Transactions</h2>
+        <p>Keep track of your income and expenses to stay on top of your budget.</p>
+    </header>
+
+    <!-- Add Transaction Form -->
+    <section class="add-transaction-form card mb-4">
+        <div class="card-header">
+            <h3><span class="icon">➕</span> Add New Transaction</h3>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('main.transactions') }}" novalidate>
+                {{ form.hidden_tag() }} <!-- CSRF Token -->
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        {{ form.type.label(class_="form-label") }}
+                        {{ form.type(class_="form-control") }}
+                        {% if form.type.errors %}
+                            <ul class="form-error">{% for error in form.type.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+                        {% endif %}
+                    </div>
+                    <div class="form-group col-md-6">
+                        {{ form.date.label(class_="form-label") }}
+                        {{ form.date(class_="form-control") }}
+                        {% if form.date.errors %}
+                            <ul class="form-error">{% for error in form.date.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        {{ form.category.label(class_="form-label") }}
+                        {{ form.category(class_="form-control", placeholder="e.g., Salary, Groceries, Rent") }}
+                        {% if form.category.errors %}
+                            <ul class="form-error">{% for error in form.category.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+                        {% endif %}
+                    </div>
+                    <div class="form-group col-md-6">
+                        {{ form.amount.label(class_="form-label") }}
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            {{ form.amount(class_="form-control", placeholder="0.00") }}
+                        </div>
+                        {% if form.amount.errors %}
+                            <ul class="form-error">{% for error in form.amount.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="form-group">
+                    {{ form.description.label(class_="form-label") }}
+                    {{ form.description(class_="form-control", rows="3", placeholder="Optional: Add a brief note about this transaction") }}
+                    {% if form.description.errors %}
+                        <ul class="form-error">{% for error in form.description.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    {{ form.submit(class_="btn btn-primary") }}
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- Transactions List -->
+    <section class="transactions-list card">
+        <div class="card-header">
+            <h3><span class="icon">🧾</span> Your Transactions</h3>
+        </div>
+        <div class="card-body">
+            {% if transactions and transactions.items %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Category</th>
+                                <th>Amount</th>
+                                <th>Description</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for transaction in transactions.items %}
+                                <tr>
+                                    <td>{{ transaction.date.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        <span class="badge badge-{{ 'success' if transaction.type == 'income' else 'danger' }}">
+                                            {{ transaction.type|capitalize }}
+                                        </span>
+                                    </td>
+                                    <td>{{ transaction.category }}</td>
+                                    <td class="{% if transaction.type == 'expense' %}text-danger{% else %}text-success{% endif %}">
+                                        ${{ "%.2f"|format(transaction.amount) }}
+                                    </td>
+                                    <td>{{ transaction.description if transaction.description else '-' }}</td>
+                                    <td>
+                                        <a href="{{ url_for('main.edit_transaction', id=transaction.id) }}" class="btn btn-sm btn-warning" title="Edit">✏️</a>
+                                        <form action="{{ url_for('main.delete_transaction', id=transaction.id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this transaction?');">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                            <button type="submit" class="btn btn-sm btn-danger" title="Delete">🗑️</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if transactions.pages > 1 %}
+                <nav aria-label="Transactions navigation">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item {% if not transactions.has_prev %}disabled{% endif %}">
+                            <a class="page-link" href="{{ url_for('main.transactions', page=transactions.prev_num) if transactions.has_prev else '#' }}">Previous</a>
+                        </li>
+                        {% for page_num in transactions.iter_pages() %}
+                            {% if page_num %}
+                                <li class="page-item {% if transactions.page == page_num %}active{% endif %}">
+                                    <a class="page-link" href="{{ url_for('main.transactions', page=page_num) }}">{{ page_num }}</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                            {% endif %}
+                        {% endfor %}
+                        <li class="page-item {% if not transactions.has_next %}disabled{% endif %}">
+                            <a class="page-link" href="{{ url_for('main.transactions', page=transactions.next_num) if transactions.has_next else '#' }}">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+                {% endif %}
+            {% else %}
+                <div class="alert alert-info">
+                    <p>No transactions found. Start by adding your income or expenses using the form above!</p>
+                    <img src="https://images.unsplash.com/photo-1580894732930-0babd100d356?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTF8fGVtcHR5JTIwc3RhdGV8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=500&q=60" alt="No transactions yet" style="max-width: 200px; margin-top: 15px; border-radius: 8px;">
+                </div>
+            {% endif %}
+        </div>
+    </section>
+</div>
+{% endblock %}
